@@ -193,122 +193,159 @@ export const TEMPLATES: Record<string, Template> = {
   }
 };
 
-const VIOLATION_WORDS = {
-  extreme: ['最', '第一', '顶级', '世界级', '国家级', '最高级', '最好', '最佳', '首选', '唯一'],
-  authority: ['特供', '专供', '老字号', '官方认证', '权威推荐', '国家认证'],
-  medical: ['治愈', '根治', '疗效', '包治', '防癌', '抗癌', '减肥', '增高'],
-  financial: ['保本', '保收益', '无风险', '稳赚', '翻倍', '暴利'],
-  induced: ['点击领取', '免费获取', '限时优惠', '仅剩', '最后', '立即行动']
+// 2025年金融投资领域内容平台合规政策指南 - 核心词库
+const COMPLIANCE_RULES = {
+  // 3.1 绝对禁止 (Absolute Prohibition)
+  absolute: [
+    '稳赚不赔', '无风险', '零风险', '高回报', '快速升值', '保值增值', 
+    '收益高达', '包赚', 'guaranteed returns', '必定翻倍', '100%本息保障', 
+    '保本保息', '稳赚', '只赚不赔'
+  ],
+  // 3.1 极限用语 (Extreme Words)
+  extreme: [
+    '最', '最佳', '最具', '最赚', '最优', '最优秀', '最好', '最大', 
+    '最大程度', '最高', '最低', '最便宜', '最新', '最先进', '首选', '唯一', 
+    '顶级', '世界级', '国家级', '第一品牌', '王牌'
+  ],
+  // 3.1 权威性词汇 (Authority)
+  authority: [
+    '质量免检', '老字号', '中国驰名商标', '特供', '专供', '国家领导人推荐', '特级'
+  ],
+  // 3.1 虚拟货币 (Crypto - Baijiahao strict)
+  crypto: [
+    '比特币', '虚拟货币', 'ICO', '代币', '数字货币', '挖矿', '以太坊', '泰达币', 'BTC'
+  ],
+  // 3.2 限制使用 (Cautionary - Requires Risk Warning)
+  cautionary: [
+    '高收益', '年化收益率', '投资回报', '预期收益', '历史回报', '升值空间'
+  ],
+  // 1.2 违规荐股 (Illegal Stock Rec)
+  stock_rec: [
+    '荐股', '跟买必涨', '内幕消息', '主力资金', '拉升在即', '黑马股', '牛股推荐', '代码私发'
+  ]
 };
 
-const SAFE_WORDS = {
-  alternative: ['优秀', '优质', '良好', '推荐', '建议', '可能', '有望', '有助于'],
-  disclaimer: ['仅供参考', '个人观点', '不构成建议', '请以实际为准']
-};
-
-function checkTextForViolations(text: string, source: string, violations: AuditResult[], safeItems: string[]) {
-  // Check extreme words
-  VIOLATION_WORDS.extreme.forEach(word => {
-    if (text.includes(word)) {
-      violations.push({
-        type: '极限用语',
-        content: `在${source}中使用了"${word}"`,
-        suggestion: `请替换为"${SAFE_WORDS.alternative[Math.floor(Math.random() * SAFE_WORDS.alternative.length)]}"或其他中性词汇`
-      });
-    }
-  });
-
-  // Check authority words
-  VIOLATION_WORDS.authority.forEach(word => {
-    if (text.includes(word)) {
-      violations.push({
-        type: '权威性词汇',
-        content: `在${source}中使用了"${word}"`,
-        suggestion: '请删除或替换为更客观的表述'
-      });
-    }
-  });
-
-  // Check medical words
-  VIOLATION_WORDS.medical.forEach(word => {
-    if (text.includes(word)) {
-      violations.push({
-        type: '医疗违规',
-        content: `在${source}中使用了"${word}"`,
-        suggestion: '请避免使用医疗效果相关词汇'
-      });
-    }
-  });
-
-  // Check financial words
-  VIOLATION_WORDS.financial.forEach(word => {
-    if (text.includes(word)) {
-      violations.push({
-        type: '金融违规',
-        content: `在${source}中使用了"${word}"`,
-        suggestion: '请避免使用收益承诺相关词汇'
-      });
-    }
-  });
-
-  // Check induced words
-  VIOLATION_WORDS.induced.forEach(word => {
-    if (text.includes(word)) {
-      violations.push({
-        type: '诱导性内容',
-        content: `在${source}中使用了"${word}"`,
-        suggestion: '请避免使用诱导性表述'
-      });
-    }
-  });
-
-  // Check safe words
-  SAFE_WORDS.disclaimer.forEach(word => {
-    if (text.includes(word)) {
-      safeItems.push(`包含免责声明"${word}"`);
-    }
-  });
-}
+const RISK_DISCLOSURE_KEYWORDS = ['投资有风险', '入市需谨慎', '风险自担', '不构成投资建议', '过往业绩不代表未来表现'];
 
 export function performAudit(title: string, content: string, platform: string): { violations: AuditResult[], safeItems: string[], suggestions: string[] } {
   const violations: AuditResult[] = [];
   const safeItems: string[] = [];
   const suggestions: string[] = [];
+  
+  const fullText = `${title} ${content}`;
+  // Handle loose platform matching
+  const isBaijiahao = platform.toLowerCase().includes('百家号') || platform.toLowerCase().includes('baijiahao');
+  const isWechat = platform.toLowerCase().includes('微信') || platform.toLowerCase().includes('wechat') || platform.toLowerCase().includes('service');
 
-  checkTextForViolations(title, '标题', violations, safeItems);
-  checkTextForViolations(content, '正文', violations, safeItems);
-
-  // Check AI content labeling (for WeChat)
-  if (platform.includes('Service') || platform.includes('wechat')) {
-    if (!content.includes('AI生成') && !content.includes('AI辅助')) {
-       // Only flag if content seems AI generated or if strict mode (mock logic here)
-       // suggestions.push('如果是AI生成内容，请在正文开头或结尾添加"本文由AI辅助生成"标注');
-       // Not forcing error unless we know it's AI, but we can add a safe item if found
-    } else {
-       safeItems.push('已正确标注AI生成内容');
-    }
-  }
-
-  // Check phone numbers (for Baijiahao)
-  if (platform.includes('Baijiahao') && content.includes('电话')) {
-    const phoneRegex = /(\d{4}-\d{3}-\d{4}|\d{11})/;
-    if (phoneRegex.test(content)) {
-      safeItems.push('电话信息格式正确');
-    } else {
+  // 1. 违禁词检测
+  // Absolute
+  COMPLIANCE_RULES.absolute.forEach(word => {
+    if (fullText.includes(word)) {
       violations.push({
-        type: '电话信息',
-        content: '电话格式可能不正确',
-        suggestion: '请使用400-123-4567或11位手机号格式'
+        type: '绝对违禁词',
+        content: `检测到"${word}"`,
+        suggestion: '根据2025新规，严禁使用收益承诺类词汇，请删除。'
       });
     }
+  });
+
+  // Extreme
+  COMPLIANCE_RULES.extreme.forEach(word => {
+    if (fullText.includes(word)) {
+      violations.push({
+        type: '极限用语',
+        content: `检测到"${word}"`,
+        suggestion: '广告法及平台规则禁止使用绝对化用语，请使用"较好"、"优秀"等程度副词替代。'
+      });
+    }
+  });
+
+  // Authority
+  COMPLIANCE_RULES.authority.forEach(word => {
+    if (fullText.includes(word)) {
+      violations.push({
+        type: '违规权威背书',
+        content: `检测到"${word}"`,
+        suggestion: '禁止借用国家机构或权威名义进行宣传，请修改。'
+      });
+    }
+  });
+
+  // Crypto (Strict on Baijiahao, Generally risky elsewhere)
+  if (isBaijiahao) {
+    COMPLIANCE_RULES.crypto.forEach(word => {
+      if (fullText.includes(word)) {
+        violations.push({
+          type: '平台高压线',
+          content: `检测到虚拟货币词汇"${word}"`,
+          suggestion: '百家号严禁发布虚拟货币、ICO相关内容，面临直接封号风险。'
+        });
+      }
+    });
   }
 
-  if (violations.length > 0) {
-    suggestions.push('请修改所有违规内容后再发布');
-    suggestions.push('建议使用更中性的表述方式');
+  // Stock Rec (Strict on WeChat)
+  if (isWechat) {
+     COMPLIANCE_RULES.stock_rec.forEach(word => {
+      if (fullText.includes(word)) {
+        violations.push({
+          type: '违规荐股风险',
+          content: `检测到"${word}"`,
+          suggestion: '微信公众平台严厉打击无资质荐股，请确保具有相关牌照并仅提供客观分析。'
+        });
+      }
+    });
+  }
+
+  // 2. 平台特定规则
+  // Baijiahao Title Length (1.1 in Guide)
+  if (isBaijiahao && title.length > 30) {
+     violations.push({
+        type: '标题规范',
+        content: `标题长度${title.length}字`,
+        suggestion: '百家号要求标题控制在30字以内，以确保移动端显示完整。'
+     });
+  }
+
+  // 3. 风险提示检测 (Risk Disclosure)
+  // If content contains cautionary words or is financial in nature (heuristic), check for risk warning.
+  const hasCautionaryWords = COMPLIANCE_RULES.cautionary.some(w => fullText.includes(w));
+  const hasRiskWarning = RISK_DISCLOSURE_KEYWORDS.some(kw => fullText.includes(kw));
+  
+  if (hasCautionaryWords && !hasRiskWarning) {
+     violations.push({
+        type: '风险提示缺失',
+        content: '涉及收益描述但未见风险提示',
+        suggestion: '根据《金融产品网络营销管理办法》，必须显著标示"投资有风险，入市需谨慎"（风险前置化）。'
+     });
+  } else if (hasRiskWarning) {
+     safeItems.push('已包含合规风险提示');
+  }
+
+  // 4. AI 内容标注 (6.1 in Guide)
+  const aiKeywords = ['AI生成', '人工智能生成', 'AI辅助', 'AI分析', '智能生成'];
+  const hasAILabel = aiKeywords.some(kw => fullText.includes(kw));
+  
+  if (!hasAILabel) {
+      // If we suspect AI content (hard to know for sure, but we add a suggestion for safety)
+      suggestions.push('如本文包含AI生成内容，请根据2025新规，在开头或结尾标注"本文由AI辅助生成"，否则可能被平台按侵权处理。');
   } else {
-    suggestions.push('内容符合平台规范，可以发布');
-    suggestions.push('建议在发布前再次检查内容准确性');
+      safeItems.push('已标注AI生成内容');
+  }
+
+  // 5. 电话/联系方式检测
+  if (content.includes('电话') || content.includes('微信')) {
+      // Simple regex for phone
+      if (/(\d{4}-\d{3}-\d{4}|\d{11})/.test(content)) {
+          safeItems.push('联系方式格式规范');
+      } else {
+           suggestions.push('检测到联系方式，请确保真实有效，避免被判定为垃圾营销。');
+      }
+  }
+
+  if (violations.length === 0) {
+      safeItems.push('未检测到明显违规词汇');
+      suggestions.push('建议在发布前进行人工复核，确保数据真实性（多源交叉验证）。');
   }
 
   return { violations, safeItems, suggestions };
