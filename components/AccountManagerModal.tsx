@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Users, Edit2, CheckCircle, AlertCircle, ArrowLeft, Save, RefreshCw, Link2, BarChart2 } from 'lucide-react';
+import { X, Plus, Trash2, Users, Edit2, CheckCircle, AlertCircle, ArrowLeft, Save, RefreshCw, Link2, BarChart2, TrendingUp } from 'lucide-react';
 import { Account, AccountStatus } from '../types';
 
 interface AccountManagerModalProps {
@@ -39,6 +40,7 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
 
   // Loading state for reconnecting
   const [reconnectingId, setReconnectingId] = useState<string | null>(null);
+  const [syncingIds, setSyncingIds] = useState<Set<string>>(new Set());
 
   if (!isOpen) return null;
 
@@ -82,6 +84,18 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
     }, 2000);
   };
 
+  const handleSync = (id: string) => {
+      setSyncingIds(prev => new Set(prev).add(id));
+      // Simulate sync delay
+      setTimeout(() => {
+          setSyncingIds(prev => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+          });
+      }, 1000);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const selectedPlatform = PLATFORM_OPTIONS.find(p => p.value === platform);
@@ -110,18 +124,18 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
   const getStatusBadge = (status: AccountStatus) => {
     switch(status) {
       case 'active':
-        return <span className="flex items-center text-xs text-green-600 dark:text-green-400 font-medium px-2 py-1 bg-green-50 dark:bg-green-900/20 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>正常</span>;
+        return <span className="flex items-center text-xs text-green-600 dark:text-green-400 font-medium px-2 py-0.5 bg-green-50 dark:bg-green-900/20 rounded-full border border-green-100 dark:border-green-900/30">正常</span>;
       case 'expired':
-        return <span className="flex items-center text-xs text-red-600 dark:text-red-400 font-medium px-2 py-1 bg-red-50 dark:bg-red-900/20 rounded-full"><span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5"></span>授权失效</span>;
+        return <span className="flex items-center text-xs text-red-600 dark:text-red-400 font-medium px-2 py-0.5 bg-red-50 dark:bg-red-900/20 rounded-full border border-red-100 dark:border-red-900/30">失效</span>;
       case 'connecting':
-        return <span className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-medium px-2 py-1 bg-yellow-50 dark:bg-yellow-900/20 rounded-full"><RefreshCw className="w-3 h-3 mr-1.5 animate-spin" />连接中</span>;
+        return <span className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 font-medium px-2 py-0.5 bg-yellow-50 dark:bg-yellow-900/20 rounded-full border border-yellow-100 dark:border-yellow-900/30">连接中</span>;
     }
   };
 
   const getPlatformIcon = (platformValue: string) => {
     const opt = PLATFORM_OPTIONS.find(p => p.value === platformValue) || PLATFORM_OPTIONS[0];
     return (
-      <div className={`w-12 h-12 rounded-xl ${opt.color} flex items-center justify-center text-white font-bold text-xl shadow-md`}>
+      <div className={`w-10 h-10 rounded-lg ${opt.color} flex items-center justify-center text-white font-bold text-lg shadow-sm`}>
         {opt.icon}
       </div>
     );
@@ -129,7 +143,7 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center animate-fade-in p-4">
-      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-2xl flex flex-col shadow-2xl h-[650px] max-h-[90vh]">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-3xl flex flex-col shadow-2xl h-[700px] max-h-[90vh]">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center">
@@ -146,13 +160,13 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                 {view === 'list' ? (
                   <>
                     <Users className="h-6 w-6 mr-2 text-primary" />
-                    账号管理
+                    账号矩阵管理
                   </>
                 ) : (
                   <>{editingId ? '编辑账号信息' : '添加新账号'}</>
                 )}
               </h2>
-              {view === 'list' && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理各平台的发布权限与状态</p>}
+              {view === 'list' && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理各平台的发布权限与运营数据</p>}
             </div>
           </div>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
@@ -163,78 +177,120 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-slate-900/50">
           {view === 'list' ? (
-            <div className="space-y-4">
+            <div className="space-y-6">
+              {/* Add New Button */}
               <button 
                 onClick={handleAddNew}
-                className="w-full py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group bg-white dark:bg-slate-800/50"
+                className="w-full py-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex items-center justify-center text-gray-500 dark:text-gray-400 hover:border-primary hover:text-primary hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group bg-white dark:bg-slate-800/50 shadow-sm"
               >
-                <div className="bg-gray-100 dark:bg-slate-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 p-2 rounded-full mr-2 transition-colors">
+                <div className="bg-gray-100 dark:bg-slate-700 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 p-2 rounded-full mr-3 transition-colors">
                   <Plus className="h-5 w-5" />
                 </div>
-                <span className="font-medium">添加新账号</span>
+                <span className="font-medium">接入新媒体账号</span>
               </button>
 
-              <div className="grid grid-cols-1 gap-4">
+              {/* Account List Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {accounts.map(account => (
-                  <div key={account.id} className="bg-white dark:bg-slate-800 p-5 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 hover:shadow-md transition-all group relative">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        {getPlatformIcon(account.platform)}
-                        <div>
-                          <h3 className="font-bold text-gray-900 dark:text-white text-lg">{account.name}</h3>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-nowrap">{account.platformName}</span>
-                            <span className="text-xs text-gray-300 dark:text-gray-600">|</span>
-                            {getStatusBadge(account.status)}
-                            {account.fans !== undefined && (
-                                <>
-                                    <span className="text-xs text-gray-300 dark:text-gray-600">|</span>
-                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
-                                        <BarChart2 className="w-3 h-3 mr-1" />
-                                        {account.fans} 粉丝
-                                    </span>
-                                </>
+                  <div key={account.id} className="group bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-primary/50 dark:hover:border-primary/50 transition-all shadow-sm hover:shadow-md overflow-hidden flex flex-col">
+                    {/* Status Strip */}
+                    <div className={`h-1 w-full ${account.status === 'active' ? 'bg-green-500' : account.status === 'expired' ? 'bg-red-500' : 'bg-yellow-500'}`} />
+                    
+                    <div className="p-5 flex-1 flex flex-col">
+                        {/* Header Section */}
+                        <div className="flex justify-between items-start mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="relative">
+                                    {getPlatformIcon(account.platform)}
+                                    {/* Status Dot */}
+                                    <span className={`absolute -bottom-1 -right-1 w-3 h-3 border-2 border-white dark:border-slate-800 rounded-full ${account.status === 'active' ? 'bg-green-500' : account.status === 'expired' ? 'bg-red-500' : 'bg-yellow-500'}`}></span>
+                                </div>
+                                <div className="overflow-hidden">
+                                    <h3 className="font-bold text-gray-900 dark:text-white text-base truncate" title={account.name}>{account.name}</h3>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{account.platformName}</p>
+                                </div>
+                            </div>
+                            <div className="flex-shrink-0">
+                                {getStatusBadge(account.status)}
+                            </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-4 gap-2 mb-5 py-3 border-y border-gray-50 dark:border-gray-700/50">
+                            <div className="text-center">
+                                <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">粉丝</div>
+                                <div className="font-bold text-gray-800 dark:text-white text-sm">
+                                    {account.fans ? (account.fans > 10000 ? (account.fans/10000).toFixed(1)+'w' : account.fans) : '-'}
+                                </div>
+                            </div>
+                            <div className="text-center border-l border-gray-100 dark:border-gray-700">
+                                <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">阅读</div>
+                                <div className="font-bold text-gray-800 dark:text-white text-sm">
+                                    {account.reads ? (account.reads > 10000 ? (account.reads/10000).toFixed(1)+'w' : account.reads) : '-'}
+                                </div>
+                            </div>
+                            <div className="text-center border-l border-gray-100 dark:border-gray-700">
+                                <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">权重</div>
+                                <div className="font-bold text-yellow-500 text-sm">Lv.{account.weight || 1}</div>
+                            </div>
+                            <div className="text-center border-l border-gray-100 dark:border-gray-700">
+                                <div className="text-[10px] text-gray-400 uppercase tracking-wider mb-1">增长</div>
+                                <div className={`font-bold text-sm flex items-center justify-center ${account.growth && account.growth > 0 ? 'text-red-500' : 'text-gray-500'}`}>
+                                    {account.growth ? (
+                                        <>
+                                            {account.growth > 0 && <TrendingUp className="w-3 h-3 mr-0.5" />}
+                                            {account.growth}%
+                                        </>
+                                    ) : '-'}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Actions Footer */}
+                        <div className="mt-auto flex items-center justify-between gap-2">
+                            {account.status === 'expired' ? (
+                                 <button
+                                    onClick={() => handleReconnect(account)}
+                                    disabled={reconnectingId === account.id}
+                                    className="flex-1 flex items-center justify-center px-3 py-2 text-xs font-medium text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+                                  >
+                                    <Link2 className={`h-3.5 w-3.5 mr-1.5 ${reconnectingId === account.id ? 'animate-spin' : ''}`} />
+                                    {reconnectingId === account.id ? '连接中...' : '重新授权'}
+                                  </button>
+                            ) : (
+                                <button 
+                                    onClick={() => handleSync(account.id)}
+                                    className="flex-1 flex items-center justify-center px-3 py-2 text-xs font-medium bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors group/sync"
+                                >
+                                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${syncingIds.has(account.id) ? 'animate-spin' : 'group-hover/sync:rotate-180 transition-transform duration-500'}`} />
+                                    {syncingIds.has(account.id) ? '同步中...' : '同步数据'}
+                                </button>
                             )}
-                          </div>
+                            
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={() => handleEdit(account)}
+                                    className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                                    title="编辑配置"
+                                >
+                                    <Edit2 className="h-4 w-4" />
+                                </button>
+                                <button 
+                                    onClick={() => onDelete(account.id)}
+                                    className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                                    title="解除绑定"
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        {account.status === 'expired' && (
-                          <button
-                            onClick={() => handleReconnect(account)}
-                            disabled={reconnectingId === account.id}
-                            className="flex items-center px-3 py-1.5 text-xs font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-sm mr-2"
-                          >
-                            <Link2 className="h-3 w-3 mr-1" />
-                            {reconnectingId === account.id ? '连接中...' : '重新连接'}
-                          </button>
-                        )}
-                        
-                        <div className="flex gap-1 border-l border-gray-100 dark:border-gray-700 pl-3 ml-1">
-                          <button 
-                            onClick={() => handleEdit(account)}
-                            className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                            title="编辑"
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </button>
-                          <button 
-                            onClick={() => onDelete(account.id)}
-                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                            title="删除"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="max-w-md mx-auto py-4">
+            <form onSubmit={handleSubmit} className="max-w-md mx-auto py-4 animate-slide-up">
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">选择平台</label>
@@ -281,24 +337,24 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
                     <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 flex items-center">
                         <BarChart2 className="w-4 h-4 mr-2" />
-                        运营数据 (手动同步)
+                        运营数据 (手动录入)
                     </h3>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-xs text-gray-500 mb-1">粉丝数</label>
-                            <input type="number" value={fans} onChange={e => setFans(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                            <input type="number" value={fans} onChange={e => setFans(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white outline-none focus:border-primary" />
                         </div>
                         <div>
                             <label className="block text-xs text-gray-500 mb-1">昨日阅读</label>
-                            <input type="number" value={reads} onChange={e => setReads(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                            <input type="number" value={reads} onChange={e => setReads(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white outline-none focus:border-primary" />
                         </div>
                          <div>
                             <label className="block text-xs text-gray-500 mb-1">权重(1-5)</label>
-                            <input type="number" max="5" min="1" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                            <input type="number" max="5" min="1" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white outline-none focus:border-primary" />
                         </div>
                         <div>
                             <label className="block text-xs text-gray-500 mb-1">周增长率 (%)</label>
-                            <input type="number" step="0.1" value={growth} onChange={e => setGrowth(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                            <input type="number" step="0.1" value={growth} onChange={e => setGrowth(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white outline-none focus:border-primary" />
                         </div>
                     </div>
                 </div>
