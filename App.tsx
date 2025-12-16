@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, Suspense } from 'react';
 import { Sidebar } from './components/Sidebar';
 import { TopBar } from './components/TopBar';
 import { StatsOverview } from './components/StatsOverview';
@@ -8,13 +9,22 @@ import { CreateTaskModal } from './components/CreateTaskModal';
 import { StatusModal } from './components/StatusModal';
 import { AccountManagerModal } from './components/AccountManagerModal';
 import { TodaySchedule } from './components/TodaySchedule';
-import { CourseManager } from './components/CourseManager';
-import { DocumentLibrary } from './components/DocumentLibrary';
-import { DevToolbox } from './components/DevToolbox';
-import { ContentSchedule } from './components/ContentSchedule';
 import { Toast } from './components/Toast';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { LoginPage } from './components/LoginPage'; // Import LoginPage
 import { Task, Stats, FilterState, Account } from './types';
 import { supabase } from './services/supabaseClient';
+import { Loader2 } from 'lucide-react';
+import { Session } from '@supabase/supabase-js';
+
+// --- Lazy Load Heavy Components ---
+const CourseManager = React.lazy(() => import('./components/CourseManager').then(module => ({ default: module.CourseManager })));
+const DocumentLibrary = React.lazy(() => import('./components/DocumentLibrary').then(module => ({ default: module.DocumentLibrary })));
+const DevToolbox = React.lazy(() => import('./components/DevToolbox').then(module => ({ default: module.DevToolbox })));
+const ContentSchedule = React.lazy(() => import('./components/ContentSchedule').then(module => ({ default: module.ContentSchedule })));
+const AccountMatrix = React.lazy(() => import('./components/AccountMatrix').then(module => ({ default: module.AccountMatrix })));
+const DataAnalytics = React.lazy(() => import('./components/DataAnalytics').then(module => ({ default: module.DataAnalytics })));
+const SettingsPanel = React.lazy(() => import('./components/SettingsPanel').then(module => ({ default: module.SettingsPanel })));
 
 // Helper to get relative dates for mock data fallback if needed
 const getRelativeDate = (diff: number) => {
@@ -23,7 +33,19 @@ const getRelativeDate = (diff: number) => {
   return date.toISOString().split('T')[0];
 };
 
+// Loading Fallback Component
+const TabLoading = () => (
+  <div className="flex flex-col items-center justify-center h-64 text-primary animate-pulse">
+    <Loader2 className="w-10 h-10 animate-spin mb-4" />
+    <p className="text-sm font-medium">正在加载模块资源...</p>
+  </div>
+);
+
 const App: React.FC = () => {
+  const [session, setSession] = useState<Session | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  // App State
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -56,7 +78,24 @@ const App: React.FC = () => {
   });
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Effects
+  // 1. Auth Check Effect
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsAuthLoading(false);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setIsAuthLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // 2. Theme Effect
   useEffect(() => {
     if (isDarkMode) {
       document.documentElement.classList.add('dark');
@@ -65,8 +104,10 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  // Fetch Data from Supabase
+  // 3. Data Fetching Effect (Only when logged in)
   const fetchData = async () => {
+    if (!session) return; // Don't fetch if not logged in
+
     setIsLoading(true);
     try {
       // Fetch Tasks
@@ -96,8 +137,10 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (session) {
+        fetchData();
+    }
+  }, [session]);
 
   useEffect(() => {
     let result = tasks;
@@ -287,6 +330,30 @@ const App: React.FC = () => {
     showToast('内容已复制到剪贴板');
   };
 
+  // AUTH LOADING STATE
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+      </div>
+    );
+  }
+
+  // NOT AUTHENTICATED -> LOGIN PAGE
+  if (!session) {
+    return (
+      <>
+        <LoginPage />
+        <Toast 
+          message={toast.message} 
+          isVisible={toast.isVisible} 
+          onClose={() => setToast({ ...toast, isVisible: false })} 
+        />
+      </>
+    );
+  }
+
+  // AUTHENTICATED -> MAIN APP
   // Extract unique platforms for filter
   const uniquePlatforms = Array.from(new Set(accounts.map(a => a.platformName)));
 
@@ -317,7 +384,7 @@ const App: React.FC = () => {
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">欢迎回来，夜风 👋</h1>
+                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">欢迎回来，{session.user.email?.split('@')[0] || '夜风'} 👋</h1>
                       <p className="text-gray-500 dark:text-gray-400 mt-1">
                         {isLoading ? '正在从数据库同步数据...' : '今天又是高效产出的一天，看看有什么新任务吧。'}
                       </p>
@@ -369,8 +436,12 @@ const App: React.FC = () => {
                         <button onClick={() => { setCurrentTask(null); setIsCreateModalOpen(true); }} className="bg-primary text-white px-4 py-2 rounded-lg">新建文章</button>
                     </div>
                     
-                    {/* Inserted Schedule Here */}
-                    <ContentSchedule />
+                    {/* Inserted Schedule Here with Suspense & ErrorBoundary */}
+                    <ErrorBoundary>
+                      <Suspense fallback={<TabLoading />}>
+                          <ContentSchedule />
+                      </Suspense>
+                    </ErrorBoundary>
 
                     <TaskFilters 
                       filters={filters} 
@@ -390,24 +461,60 @@ const App: React.FC = () => {
                   </div>
               )}
 
-              {activeTab === 'courses' && <CourseManager />}
+              {activeTab === 'courses' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <CourseManager />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
               
-              {activeTab === 'documents' && <DocumentLibrary />}
+              {activeTab === 'documents' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <DocumentLibrary />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
               
-              {activeTab === 'devtools' && <DevToolbox />}
+              {activeTab === 'devtools' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <DevToolbox />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
+              
+              {activeTab === 'accounts' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <AccountMatrix 
+                        accounts={accounts} 
+                        onManage={() => setIsAccountModalOpen(true)}
+                        onCreateTask={() => { setCurrentTask(null); setIsCreateModalOpen(true); }}
+                      />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
 
-              {activeTab !== 'dashboard' && activeTab !== 'content' && activeTab !== 'courses' && activeTab !== 'documents' && activeTab !== 'devtools' && (
-                 <div className="flex flex-col items-center justify-center py-20">
-                    <div className="text-6xl mb-4">🚧</div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">模块建设中</h2>
-                    <p className="text-gray-500 mt-2">"{activeTab}" 功能模块正在开发中，请先使用工作台。</p>
-                    <button 
-                      onClick={() => setActiveTab('dashboard')}
-                      className="mt-6 px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                      返回工作台
-                    </button>
-                 </div>
+              {activeTab === 'analytics' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <DataAnalytics tasks={tasks} accounts={accounts} />
+                  </Suspense>
+                </ErrorBoundary>
+              )}
+
+              {activeTab === 'settings' && (
+                <ErrorBoundary>
+                  <Suspense fallback={<TabLoading />}>
+                      <SettingsPanel 
+                        isDarkMode={isDarkMode} 
+                        toggleTheme={toggleTheme} 
+                        showToast={showToast}
+                      />
+                  </Suspense>
+                </ErrorBoundary>
               )}
            </div>
         </main>

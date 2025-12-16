@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Image, FileSpreadsheet, File, FolderOpen, UploadCloud, Search, Download, Trash2, FileCode, HardDrive, User, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { FileText, Image, FileSpreadsheet, File, FolderOpen, UploadCloud, Search, Download, Trash2, FileCode, HardDrive, User, RefreshCw, Loader2 } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
 
 interface DocFile {
@@ -9,6 +9,7 @@ interface DocFile {
   size: string;
   updatedAt: string;
   author: string;
+  storage_path?: string;
 }
 
 export const DocumentLibrary: React.FC = () => {
@@ -16,6 +17,8 @@ export const DocumentLibrary: React.FC = () => {
   const [search, setSearch] = useState('');
   const [files, setFiles] = useState<DocFile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocuments = async () => {
     setIsLoading(true);
@@ -38,37 +41,115 @@ export const DocumentLibrary: React.FC = () => {
     fetchDocuments();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if(window.confirm('确认删除该文件吗？')) {
+  const handleDelete = async (id: string, path?: string) => {
+    if(window.confirm('确认删除该文件吗？此操作不可恢复。')) {
       try {
+        // 1. Delete from Storage (if path exists)
+        if (path) {
+            const { error: storageError } = await supabase.storage.from('documents').remove([path]);
+            if (storageError) console.warn('Storage delete warning:', storageError);
+        }
+
+        // 2. Delete from Database
         const { error } = await supabase.from('documents').delete().eq('id', id);
         if (error) throw error;
+        
         setFiles(prev => prev.filter(f => f.id !== id));
       } catch (error) {
         console.error('Delete failed:', error);
-        alert('删除失败');
+        alert('删除失败，请检查权限');
       }
     }
   }
 
-  // Handle Mock Upload for demonstration
-  const handleUpload = async () => {
-     // In a real app, this would upload to Supabase Storage bucket and then insert a record
-     const mockFile: Partial<DocFile> = {
-         name: `New_Upload_${new Date().getTime()}.pdf`,
-         type: 'pdf',
-         size: '1.2 MB',
-         updatedAt: new Date().toISOString().split('T')[0],
-         author: '夜风'
-     };
-     
-     try {
-       const { data, error } = await supabase.from('documents').insert([mockFile]).select().single();
-       if (error) throw error;
-       if (data) setFiles(prev => [data as DocFile, ...prev]);
-     } catch (error) {
-       console.error(error);
-     }
+  const handleDownload = async (file: DocFile) => {
+      if (!file.storage_path) {
+          alert("此文件未关联存储路径 (可能是演示数据)");
+          return;
+      }
+      try {
+          // Create a signed URL valid for 5 minutes
+          const { data, error } = await supabase.storage
+              .from('documents')
+              .createSignedUrl(file.storage_path, 300);
+          
+          if (error) throw error;
+          if (data?.signedUrl) {
+              window.open(data.signedUrl, '_blank');
+          }
+      } catch (error) {
+          console.error('Download error', error);
+          alert("无法获取下载链接");
+      }
+  }
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    
+    const file = e.target.files[0];
+    
+    // Simple validation (Max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+        alert("文件大小不能超过 10MB");
+        return;
+    }
+
+    setIsUploading(true);
+    try {
+        // 1. Upload to Supabase Storage
+        const fileExt = file.name.split('.').pop()?.toLowerCase() || 'unknown';
+        // Sanitize filename: timestamp + safe characters
+        const sanitizedName = file.name.replace(/[^\x00-\x7F]/g, "_"); 
+        const filePath = `${Date.now()}_${sanitizedName}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from('documents')
+            .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        // 2. Insert metadata into Database
+        const sizeStr = file.size < 1024 * 1024 
+            ? `${(file.size / 1024).toFixed(1)} KB`
+            : `${(file.size / (1024 * 1024)).toFixed(1)} MB`;
+
+        const { data: userData } = await supabase.auth.getUser();
+        const author = userData.user?.email?.split('@')[0] || '夜风'; // Default fallback
+
+        // Determine type category
+        let docType: any = 'other';
+        if (['pdf', 'doc', 'docx', 'txt', 'md'].includes(fileExt)) docType = 'doc';
+        else if (['jpg', 'jpeg', 'png', 'gif', 'svg'].includes(fileExt)) docType = 'img';
+        else if (['xls', 'xlsx', 'csv'].includes(fileExt)) docType = 'sheet';
+        else if (['js', 'ts', 'tsx', 'py', 'json', 'sql', 'html', 'css'].includes(fileExt)) docType = 'code';
+        else if (['pdf'].includes(fileExt)) docType = 'pdf';
+
+        const newDoc = {
+            name: file.name,
+            type: docType,
+            size: sizeStr,
+            updatedAt: new Date().toISOString().split('T')[0],
+            author: author,
+            storage_path: filePath
+        };
+        
+        const { data, error: dbError } = await supabase
+            .from('documents')
+            .insert([newDoc])
+            .select()
+            .single();
+
+        if (dbError) throw dbError;
+        if (data) setFiles(prev => [data as DocFile, ...prev]);
+        
+    } catch (error: any) {
+        console.error('Upload error:', error);
+        alert('上传失败: ' + (error.message || '未知错误'));
+    } finally {
+        setIsUploading(false);
+        // Reset input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   }
 
   const filteredFiles = files.filter(f => {
@@ -117,6 +198,13 @@ export const DocumentLibrary: React.FC = () => {
 
   return (
     <div className="animate-fade-in space-y-6 h-full flex flex-col">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        className="hidden" 
+        onChange={handleFileSelect} 
+      />
+      
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white">文档资源库</h2>
@@ -126,9 +214,13 @@ export const DocumentLibrary: React.FC = () => {
             <button onClick={fetchDocuments} className="p-2 bg-gray-100 dark:bg-slate-700 rounded-lg hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors">
                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
-            <button onClick={handleUpload} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg font-medium flex items-center shadow-md transition-all">
-                <UploadCloud className="w-4 h-4 mr-2" />
-                上传文件
+            <button 
+                onClick={() => fileInputRef.current?.click()} 
+                disabled={isUploading}
+                className="bg-primary hover:bg-primary/90 disabled:bg-primary/70 text-white px-4 py-2 rounded-lg font-medium flex items-center shadow-md transition-all"
+            >
+                {isUploading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <UploadCloud className="w-4 h-4 mr-2" />}
+                {isUploading ? '上传中...' : '上传文件'}
             </button>
         </div>
       </div>
@@ -219,10 +311,18 @@ export const DocumentLibrary: React.FC = () => {
                                     {getFileIcon(file.type)}
                                 </div>
                                 <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                                    <button className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-gray-400 hover:text-primary">
+                                    <button 
+                                        onClick={() => handleDownload(file)}
+                                        className="p-1.5 hover:bg-gray-100 dark:hover:bg-slate-700 rounded text-gray-400 hover:text-primary"
+                                        title="下载"
+                                    >
                                         <Download className="w-4 h-4" />
                                     </button>
-                                    <button onClick={() => handleDelete(file.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500">
+                                    <button 
+                                        onClick={() => handleDelete(file.id, file.storage_path)} 
+                                        className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 rounded text-gray-400 hover:text-red-500"
+                                        title="删除"
+                                    >
                                         <Trash2 className="w-4 h-4" />
                                     </button>
                                 </div>
@@ -244,10 +344,17 @@ export const DocumentLibrary: React.FC = () => {
                         </div>
                     ))}
                     
-                    {/* Simulated Upload Card */}
-                    <div onClick={handleUpload} className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center p-4 text-gray-400 hover:border-primary hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer min-h-[140px]">
-                        <UploadCloud className="w-8 h-8 mb-2" />
-                        <span className="text-sm font-medium">拖拽或点击上传 (测试)</span>
+                    {/* Upload Card */}
+                    <div 
+                        onClick={() => fileInputRef.current?.click()} 
+                        className={`border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center p-4 text-gray-400 hover:border-primary hover:text-primary hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer min-h-[140px] ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}
+                    >
+                        {isUploading ? (
+                             <Loader2 className="w-8 h-8 mb-2 animate-spin" />
+                        ) : (
+                             <UploadCloud className="w-8 h-8 mb-2" />
+                        )}
+                        <span className="text-sm font-medium">{isUploading ? '正在上传...' : '点击上传新文件'}</span>
                     </div>
                 </div>
              )}

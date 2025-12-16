@@ -9,6 +9,11 @@ export interface Account {
   name: string;
   status: AccountStatus;
   avatar?: string;
+  // New Analytics Fields
+  fans?: number;
+  reads?: number;
+  weight?: number; // 1-5
+  growth?: number; // percentage (e.g., 1.5 for 1.5%)
 }
 
 export interface Task {
@@ -25,6 +30,9 @@ export interface Task {
   publishLink?: string;
   notes?: string;
   isFocus?: boolean;
+  // New Analytics Fields
+  views?: number;
+  ctr?: number;
 }
 
 export interface Stats {

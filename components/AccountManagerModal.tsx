@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Trash2, Users, Edit2, CheckCircle, AlertCircle, ArrowLeft, Save, RefreshCw, Link2 } from 'lucide-react';
+import { X, Plus, Trash2, Users, Edit2, CheckCircle, AlertCircle, ArrowLeft, Save, RefreshCw, Link2, BarChart2 } from 'lucide-react';
 import { Account, AccountStatus } from '../types';
 
 interface AccountManagerModalProps {
@@ -30,6 +30,12 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
   const [platform, setPlatform] = useState(PLATFORM_OPTIONS[0].value);
   const [name, setName] = useState('');
   const [status, setStatus] = useState<AccountStatus>('active');
+  
+  // New Stats Fields
+  const [fans, setFans] = useState<string>('0');
+  const [reads, setReads] = useState<string>('0');
+  const [weight, setWeight] = useState<string>('1');
+  const [growth, setGrowth] = useState<string>('0');
 
   // Loading state for reconnecting
   const [reconnectingId, setReconnectingId] = useState<string | null>(null);
@@ -40,6 +46,10 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
     setPlatform(PLATFORM_OPTIONS[0].value);
     setName('');
     setStatus('active');
+    setFans('0');
+    setReads('0');
+    setWeight('1');
+    setGrowth('0');
     setEditingId(null);
   };
 
@@ -53,6 +63,10 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
     setPlatform(account.platform);
     setName(account.name);
     setStatus(account.status);
+    setFans(account.fans?.toString() || '0');
+    setReads(account.reads?.toString() || '0');
+    setWeight(account.weight?.toString() || '1');
+    setGrowth(account.growth?.toString() || '0');
     setView('form');
   };
 
@@ -76,7 +90,11 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
       platform,
       platformName: selectedPlatform?.label || '未知平台',
       name,
-      status
+      status,
+      fans: parseInt(fans) || 0,
+      reads: parseInt(reads) || 0,
+      weight: parseInt(weight) || 1,
+      growth: parseFloat(growth) || 0.0
     };
 
     if (editingId) {
@@ -131,7 +149,7 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                     账号管理
                   </>
                 ) : (
-                  <>{editingId ? '编辑账号' : '添加新账号'}</>
+                  <>{editingId ? '编辑账号信息' : '添加新账号'}</>
                 )}
               </h2>
               {view === 'list' && <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">管理各平台的发布权限与状态</p>}
@@ -168,6 +186,15 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                             <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-slate-700 px-2 py-0.5 rounded text-nowrap">{account.platformName}</span>
                             <span className="text-xs text-gray-300 dark:text-gray-600">|</span>
                             {getStatusBadge(account.status)}
+                            {account.fans !== undefined && (
+                                <>
+                                    <span className="text-xs text-gray-300 dark:text-gray-600">|</span>
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center">
+                                        <BarChart2 className="w-3 h-3 mr-1" />
+                                        {account.fans} 粉丝
+                                    </span>
+                                </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -205,16 +232,6 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                   </div>
                 ))}
               </div>
-              
-              {accounts.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                   <div className="w-20 h-20 bg-gray-100 dark:bg-slate-800 rounded-full flex items-center justify-center mb-4">
-                     <Users className="h-10 w-10 text-gray-300 dark:text-gray-600" />
-                   </div>
-                   <h3 className="text-lg font-medium text-gray-900 dark:text-white">暂无账号</h3>
-                   <p className="text-gray-500 dark:text-gray-400 mt-1 max-w-xs">点击上方按钮添加您的第一个社交媒体账号</p>
-                </div>
-              )}
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="max-w-md mx-auto py-4">
@@ -259,11 +276,35 @@ export const AccountManagerModal: React.FC<AccountManagerModalProps> = ({
                     placeholder="例如：科技观察号"
                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-primary/50 outline-none transition-all"
                   />
-                  <p className="text-xs text-gray-500 mt-1">给这个账号起一个易于识别的名称</p>
+                </div>
+
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                    <h3 className="text-sm font-bold text-gray-800 dark:text-white mb-3 flex items-center">
+                        <BarChart2 className="w-4 h-4 mr-2" />
+                        运营数据 (手动同步)
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1">粉丝数</label>
+                            <input type="number" value={fans} onChange={e => setFans(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1">昨日阅读</label>
+                            <input type="number" value={reads} onChange={e => setReads(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                        </div>
+                         <div>
+                            <label className="block text-xs text-gray-500 mb-1">权重(1-5)</label>
+                            <input type="number" max="5" min="1" value={weight} onChange={e => setWeight(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-500 mb-1">周增长率 (%)</label>
+                            <input type="number" step="0.1" value={growth} onChange={e => setGrowth(e.target.value)} className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-gray-50 dark:bg-slate-700 text-gray-900 dark:text-white" />
+                        </div>
+                    </div>
                 </div>
 
                 <div className="bg-gray-50 dark:bg-slate-800/50 p-4 rounded-xl border border-gray-100 dark:border-gray-700">
-                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">账号状态 (模拟设置)</label>
+                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">账号状态</label>
                    <div className="flex space-x-4">
                       <label className={`flex-1 flex items-center justify-center cursor-pointer p-3 rounded-lg border transition-all ${status === 'active' ? 'bg-white dark:bg-slate-700 border-green-500 text-green-700 dark:text-green-400 shadow-sm' : 'border-transparent hover:bg-gray-100 dark:hover:bg-slate-700 text-gray-500'}`}>
                         <input 

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { BookOpen, TrendingUp, TrendingDown, Minus, FileText, MoreVertical, MessageSquare, Play, Edit, PieChart, Users, AlertCircle, Globe, ExternalLink, Bookmark, PenTool, Save, LayoutGrid, List, RefreshCw } from 'lucide-react';
+import { BookOpen, TrendingUp, TrendingDown, Minus, FileText, MoreVertical, MessageSquare, Play, Edit, PieChart, Users, AlertCircle, Globe, ExternalLink, Bookmark, PenTool, Save, LayoutGrid, List, RefreshCw, Table, Copy, Check } from 'lucide-react';
 import { CourseScript } from '../types';
 import { CourseEditorModal } from './CourseEditorModal';
 import { supabase } from '../services/supabaseClient';
@@ -15,13 +15,55 @@ const RESEARCH_SOURCES = [
     { name: '巨潮资讯', url: 'http://www.cninfo.com.cn', category: '公告', desc: '上市公司官方公告查询', color: 'emerald' },
 ];
 
+// Table Templates for Financial Courses
+const TABLE_TEMPLATES = [
+    {
+        id: 'sector-flow',
+        name: '行业资金流向表',
+        desc: '展示当日主力资金净流入前五的板块',
+        headers: ['板块名称', '涨跌幅', '主力净流入(亿)', '领涨个股'],
+        rows: [
+            ['人工智能', '+3.2%', '+25.4', '科大讯飞'],
+            ['半导体', '+2.1%', '+18.2', '中芯国际'],
+            ['新能源车', '+1.5%', '+12.1', '宁德时代'],
+            ['证券', '-0.5%', '-5.2', '中信证券'],
+            ['白酒', '-1.2%', '-8.4', '贵州茅台']
+        ]
+    },
+    {
+        id: 'valuation',
+        name: '核心宽基估值表',
+        desc: '用于判断市场当前的水位（低估/高估）',
+        headers: ['指数名称', '当前PE', '历史百分位', '估值状态'],
+        rows: [
+            ['沪深300', '11.5', '25%', '低估区间'],
+            ['创业板指', '32.1', '15%', '极低估'],
+            ['科创50', '45.2', '10%', '历史底部'],
+            ['中证500', '22.4', '40%', '合理偏低']
+        ]
+    },
+    {
+        id: 'portfolio',
+        name: '模拟组合表现周报',
+        desc: '展示教学组合的近期收益情况',
+        headers: ['代码', '名称', '持仓占比', '本周收益', '累计收益'],
+        rows: [
+            ['600519', '贵州茅台', '20%', '-1.5%', '+120%'],
+            ['300750', '宁德时代', '15%', '+2.4%', '+85%'],
+            ['002594', '比亚迪', '15%', '+1.8%', '+45%'],
+            ['601888', '中国中免', '10%', '-3.2%', '-15%']
+        ]
+    }
+];
+
 export const CourseManager: React.FC = () => {
   const [courses, setCourses] = useState<CourseScript[]>([]);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [currentScript, setCurrentScript] = useState<CourseScript | null>(null);
-  const [activeTab, setActiveTab] = useState<'list' | 'research'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'research' | 'tables'>('list');
   const [scratchpad, setScratchpad] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [copiedTableId, setCopiedTableId] = useState<string | null>(null);
 
   // Fetch courses from Supabase
   const fetchCourses = async () => {
@@ -92,6 +134,20 @@ export const CourseManager: React.FC = () => {
     }
   };
 
+  const generateMarkdownTable = (template: typeof TABLE_TEMPLATES[0]) => {
+      const headerRow = `| ${template.headers.join(' | ')} |`;
+      const separatorRow = `| ${template.headers.map(() => '---').join(' | ')} |`;
+      const bodyRows = template.rows.map(row => `| ${row.join(' | ')} |`).join('\n');
+      return `${headerRow}\n${separatorRow}\n${bodyRows}`;
+  };
+
+  const copyTableAsMarkdown = (template: typeof TABLE_TEMPLATES[0]) => {
+      const md = generateMarkdownTable(template);
+      navigator.clipboard.writeText(md);
+      setCopiedTableId(template.id);
+      setTimeout(() => setCopiedTableId(null), 2000);
+  };
+
   return (
     <div className="animate-fade-in space-y-6">
       {/* Header & Tabs */}
@@ -115,6 +171,13 @@ export const CourseManager: React.FC = () => {
              >
                 <Globe className="w-4 h-4 mr-2" />
                 投研情报台
+             </button>
+             <button 
+                onClick={() => setActiveTab('tables')}
+                className={`flex items-center px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === 'tables' ? 'bg-white dark:bg-slate-600 text-primary shadow-sm' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'}`}
+             >
+                <Table className="w-4 h-4 mr-2" />
+                数据报表
              </button>
         </div>
 
@@ -247,6 +310,76 @@ export const CourseManager: React.FC = () => {
                 </div>
             </div>
         </div>
+      )}
+
+      {/* View: Data Tables */}
+      {activeTab === 'tables' && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fade-in">
+              <div className="lg:col-span-2">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 border border-blue-100 dark:border-blue-900/30 mb-6 flex items-start gap-3">
+                        <div className="mt-1 p-1 bg-blue-100 dark:bg-blue-800 rounded text-blue-600 dark:text-blue-300">
+                             <Table className="w-4 h-4" />
+                        </div>
+                        <div>
+                            <h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm">如何使用表格？</h4>
+                            <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
+                                1. 点击下方模板的“复制表格代码”按钮。<br/>
+                                2. 进入“课程列表” -> “新建讲义”或编辑现有讲义。<br/>
+                                3. 在编辑器中直接粘贴，系统会自动渲染为漂亮的 Markdown 表格。
+                            </p>
+                        </div>
+                  </div>
+              </div>
+
+              {TABLE_TEMPLATES.map(template => (
+                  <div key={template.id} className="bg-white dark:bg-slate-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden flex flex-col">
+                      <div className="p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-slate-900/50 flex justify-between items-center">
+                          <div>
+                              <h3 className="font-bold text-gray-900 dark:text-white">{template.name}</h3>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">{template.desc}</p>
+                          </div>
+                          <button 
+                            onClick={() => copyTableAsMarkdown(template)}
+                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-700 border border-gray-200 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-600 transition-colors text-gray-700 dark:text-gray-300"
+                          >
+                              {copiedTableId === template.id ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                              {copiedTableId === template.id ? '已复制' : '复制表格代码'}
+                          </button>
+                      </div>
+                      <div className="p-4 overflow-x-auto">
+                          <table className="w-full text-sm text-left">
+                              <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-slate-800/50 border-b border-gray-100 dark:border-gray-700">
+                                  <tr>
+                                      {template.headers.map((h, i) => (
+                                          <th key={i} className="px-4 py-3 font-medium">{h}</th>
+                                      ))}
+                                  </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                  {template.rows.map((row, idx) => (
+                                      <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-slate-800/50 transition-colors">
+                                          {row.map((cell, cIdx) => (
+                                              <td key={cIdx} className="px-4 py-3 font-medium text-gray-700 dark:text-gray-300">
+                                                  <span className={cell.includes('+') ? 'text-red-500' : cell.includes('-') ? 'text-green-500' : ''}>
+                                                      {cell}
+                                                  </span>
+                                              </td>
+                                          ))}
+                                      </tr>
+                                  ))}
+                              </tbody>
+                          </table>
+                      </div>
+                  </div>
+              ))}
+              
+              <div className="border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl flex flex-col items-center justify-center p-6 text-gray-400 hover:border-primary hover:text-primary transition-colors cursor-pointer min-h-[200px]">
+                   <div className="w-12 h-12 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mb-3">
+                       <Table className="w-6 h-6" />
+                   </div>
+                   <span className="font-medium text-sm">自定义新表格 (开发中)</span>
+              </div>
+          </div>
       )}
 
       {/* View: Research Hub */}

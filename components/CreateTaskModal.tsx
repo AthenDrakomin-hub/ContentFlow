@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Bold, Italic, List, ListOrdered, Link, Eraser, Save, Eye, Copy, Check, Sparkles, Loader2, Search, Shield, Info, AlertTriangle, Lightbulb, Wand2 } from 'lucide-react';
 import { Task, Account, Template, AuditResult } from '../types';
 import { optimizeContent, fixComplianceIssues } from '../services/geminiService';
@@ -17,6 +17,7 @@ interface CreateTaskModalProps {
 export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onSave, initialTask, showToast, accounts }) => {
   const [step, setStep] = useState<'template' | 'editor'>('template');
   const [selectedPlatform, setSelectedPlatform] = useState<'all' | 'baijiahao' | 'wechat'>('all');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const [formData, setFormData] = useState<Partial<Task>>({
     title: '',
@@ -53,6 +54,26 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   }, [initialTask, isOpen, accounts]);
 
   if (!isOpen) return null;
+
+  const insertText = (prefix: string, suffix: string = '') => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = formData.content || '';
+    const selectedText = text.substring(start, end);
+
+    const newText = text.substring(0, start) + prefix + selectedText + suffix + text.substring(end);
+    
+    setFormData({ ...formData, content: newText });
+
+    // Restore focus and selection
+    setTimeout(() => {
+        textarea.focus();
+        textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
 
   const handleAiOptimize = async () => {
     if (!formData.title && !formData.content) {
@@ -329,18 +350,19 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                     
                     <div className="border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden flex flex-col h-[500px]">
                       <div className="bg-gray-50 dark:bg-slate-700 border-b border-gray-200 dark:border-gray-600 p-2 flex flex-wrap gap-1 flex-shrink-0">
-                        <button className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300"><Bold className="h-4 w-4" /></button>
-                        <button className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300"><Italic className="h-4 w-4" /></button>
-                        <button className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300"><List className="h-4 w-4" /></button>
-                        <button className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300"><Link className="h-4 w-4" /></button>
+                        <button onClick={() => insertText('**', '**')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300" title="加粗"><Bold className="h-4 w-4" /></button>
+                        <button onClick={() => insertText('*', '*')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300" title="斜体"><Italic className="h-4 w-4" /></button>
+                        <button onClick={() => insertText('- ')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300" title="无序列表"><List className="h-4 w-4" /></button>
+                        <button onClick={() => insertText('[链接文字](', ')')} className="p-1.5 rounded hover:bg-gray-200 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300" title="插入链接"><Link className="h-4 w-4" /></button>
                         <div className="flex-grow"></div>
                         <button onClick={() => setFormData({...formData, title: '', content: ''})} className="p-1.5 rounded hover:bg-red-100 text-red-500" title="清空"><Eraser className="h-4 w-4" /></button>
                       </div>
                       <textarea
+                        ref={textareaRef}
                         value={formData.content}
                         onChange={e => setFormData({...formData, content: e.target.value})}
                         className="w-full h-full p-4 bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-200 focus:outline-none resize-none font-mono text-sm leading-relaxed"
-                        placeholder="在此输入内容..."
+                        placeholder="在此输入内容... 支持 Markdown 语法"
                       />
                     </div>
                   </div>
