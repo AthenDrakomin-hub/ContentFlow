@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Clipboard, Scissors, Calculator, Smile, Trash2, ArrowRight, Percent, Copy, Check, Stethoscope, AlertTriangle, ShieldCheck, Activity, Link, Plus, Globe, ExternalLink, RefreshCw } from 'lucide-react';
 import { supabase } from '../services/supabaseClient';
@@ -487,7 +488,7 @@ export const DevToolbox: React.FC = () => {
                             <h4 className="text-sm font-bold text-blue-800 dark:text-blue-300 mb-2">💡 飞书排版小技巧</h4>
                             <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1 list-disc list-inside">
                                 <li>使用 **文字** 进行加粗强调</li>
-                                <li>使用 > 引用之前的观点</li>
+                                <li>使用 &gt; 引用之前的观点</li>
                                 <li>emoji 放在段落开头作为视觉索引</li>
                                 <li>重要结论建议单独成行</li>
                             </ul>
