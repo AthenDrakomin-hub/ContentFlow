@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { X, Bold, Italic, List, ListOrdered, Link, Eraser, Save, Eye, Copy, Check, Sparkles, Loader2, Search, Shield, Info, AlertTriangle, Lightbulb, Wand2 } from 'lucide-react';
 import { Task, Account, Template, AuditResult } from '../types';
@@ -67,10 +68,10 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         title: result.title,
         content: result.content
       }));
-      showToast("内容已由 AI 优化！");
+      showToast("内容已自动优化完成！");
     } catch (error) {
       console.error(error);
-      showToast("AI 优化失败，请检查 API 配置。");
+      showToast("优化失败，请重试。");
     } finally {
       setIsAiLoading(false);
     }
@@ -87,7 +88,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         ...prev,
         content: fixedContent
       }));
-      showToast("AI 已尝试修复合规问题，请复核。");
+      showToast("已自动替换敏感词并添加合规提示。");
       // Re-run audit
       setTimeout(() => handleAudit(), 1000);
     } catch (error) {
@@ -309,7 +310,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                         onClick={handleAiOptimize}
                         disabled={isAiLoading}
                         className="bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300 dark:hover:bg-purple-900/50 px-4 rounded-lg font-medium transition-all flex items-center"
-                        title="AI 优化标题与内容"
+                        title="自动优化标题与内容"
                       >
                         {isAiLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
                       </button>
@@ -362,7 +363,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                           className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full flex items-center hover:bg-purple-200 transition-colors"
                         >
                           {isFixing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wand2 className="h-3 w-3 mr-1" />}
-                          AI 一键修复
+                          一键修正
                         </button>
                       )}
                     </h3>

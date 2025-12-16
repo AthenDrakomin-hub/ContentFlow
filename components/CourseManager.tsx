@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { BookOpen, TrendingUp, TrendingDown, Minus, FileText, MoreVertical, MessageSquare, Play, Edit, PieChart, Users, AlertCircle, Globe, ExternalLink, Bookmark, PenTool, Save, LayoutGrid, List, RefreshCw } from 'lucide-react';
 import { CourseScript } from '../types';
@@ -161,7 +162,7 @@ export const CourseManager: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex justify-between text-xs mb-2 text-gray-400">
-                            <span>高频交易(>20次/月) 亏损率</span>
+                            <span>高频交易(&gt;20次/月) 亏损率</span>
                             <span className="text-orange-400 font-mono">82%</span>
                         </div>
                         <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { X, Sparkles, Save, FileText, Loader2, Copy, Check } from 'lucide-react';
 import { CourseScript } from '../types';
@@ -58,7 +59,7 @@ export const CourseEditorModal: React.FC<CourseEditorModalProps> = ({ isOpen, on
       setFormData(prev => ({ ...prev, scriptContent: script }));
     } catch (e) {
       console.error(e);
-      alert('生成失败，请检查API Key');
+      alert('生成失败，请重试');
     } finally {
       setIsGenerating(false);
     }
@@ -166,9 +167,9 @@ export const CourseEditorModal: React.FC<CourseEditorModalProps> = ({ isOpen, on
                             className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white py-3 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed group"
                          >
                              {isGenerating ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Sparkles className="w-5 h-5 mr-2 group-hover:scale-110 transition-transform" />}
-                             AI 一键生成讲义
+                             生成讲义模版
                          </button>
-                         <p className="text-xs text-center text-gray-400 mt-2">基于 Gemini 2.5 Flash • 针对飞书排版优化</p>
+                         <p className="text-xs text-center text-gray-400 mt-2">基于本地模版 • 针对飞书排版优化</p>
                     </div>
                 </div>
             </div>
@@ -188,7 +189,7 @@ export const CourseEditorModal: React.FC<CourseEditorModalProps> = ({ isOpen, on
                 <textarea 
                     value={formData.scriptContent}
                     onChange={e => setFormData({...formData, scriptContent: e.target.value})}
-                    placeholder="在此撰写或等待 AI 生成..."
+                    placeholder="在此撰写或等待生成..."
                     className="flex-1 w-full p-4 border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-slate-900/50 text-gray-800 dark:text-gray-200 resize-none outline-none focus:border-primary font-mono text-base leading-relaxed"
                 />
             </div>

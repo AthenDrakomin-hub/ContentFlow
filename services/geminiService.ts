@@ -1,123 +1,101 @@
-import { GoogleGenAI, Type } from "@google/genai";
 
-const apiKey = process.env.API_KEY || '';
-
-// Initialize only if key exists to avoid immediate errors, though we will handle calls gracefully
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// 替代原有的 Gemini AI 服务
+// 使用本地规则和模版引擎来模拟智能功能，无需外部 API Key
 
 export const optimizeContent = async (title: string, content: string): Promise<{ title: string; content: string }> => {
-  if (!ai) {
-    throw new Error("未找到 API Key。请配置环境变量。");
+  // 模拟网络处理延迟
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  let optimizedTitle = title.trim();
+  // 简单的标题优化规则：添加吸睛前缀
+  if (!optimizedTitle.startsWith('【')) {
+    const prefixes = ['【深度】', '【独家】', '【复盘】', '【干货】'];
+    const randomPrefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+    optimizedTitle = `${randomPrefix}${optimizedTitle}`;
   }
 
-  try {
-    const model = 'gemini-2.5-flash';
-    const prompt = `
-      你是一个专业的跨境发布平台内容编辑。
-      请优化以下文章标题和内容，以提高参与度、清晰度和 SEO 效果。
-      
-      当前标题: ${title}
-      当前内容: ${content}
-
-      请以 JSON 格式返回结果，包含 'title' 和 'content' 字段。
-      保持内容长度相近，但改善流畅度。请用中文回复。
-    `;
-
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            title: { type: Type.STRING },
-            content: { type: Type.STRING }
-          },
-          required: ["title", "content"]
-        }
-      }
-    });
-
-    const result = response.text;
-    if (!result) throw new Error("AI 没有响应");
-    
-    return JSON.parse(result);
-  } catch (error) {
-    console.error("Gemini 优化错误:", error);
-    throw error;
+  let optimizedContent = content.trim();
+  // 简单的内容优化规则：添加摘要和排版提示
+  if (!optimizedContent.includes('摘要')) {
+      const summary = optimizedContent.slice(0, 60).replace(/\n/g, ' ') + '...';
+      optimizedContent = `> **摘要**：${summary}\n\n${optimizedContent}`;
   }
+  
+  // 模拟结尾添加引导
+  if (!optimizedContent.includes('关注')) {
+      optimizedContent += `\n\n-------------------\n👉 点击关注，不错过每一个投资机会！`;
+  }
+
+  return { 
+    title: optimizedTitle, 
+    content: optimizedContent 
+  };
 };
 
 export const fixComplianceIssues = async (content: string, violations: string[]): Promise<string> => {
-  if (!ai) {
-    throw new Error("未找到 API Key。请配置环境变量。");
+  // 模拟处理
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  let fixedContent = content;
+  
+  // 规则库：违禁词 -> 合规词
+  const rules: Record<string, string> = {
+      '稳赚': '具有潜力',
+      '必涨': '看好',
+      '暴富': '财富积累',
+      '翻倍': '大幅增长',
+      '无风险': '风险可控',
+      '第一': '领先',
+      '最': '较',
+      '保证': '力争',
+      '承诺': '预计',
+      '100%': '极大概率'
+  };
+
+  // 执行替换
+  Object.entries(rules).forEach(([bad, good]) => {
+      fixedContent = fixedContent.split(bad).join(good);
+  });
+
+  // 强制添加风险提示
+  const riskWarning = '\n\n【风险提示】市场有风险，投资需谨慎。本文仅代表个人观点，不构成投资建议。';
+  if (!fixedContent.includes('风险') && !fixedContent.includes('谨慎')) {
+      fixedContent += riskWarning;
   }
 
-  try {
-    const model = 'gemini-2.5-flash';
-    const prompt = `
-      你是一个专业的金融内容合规审核员。
-      以下内容包含违规词汇或不合规描述，请重写内容以符合金融投资领域合规要求。
-
-      违规点: ${violations.join(', ')}
-      
-      原始内容: ${content}
-
-      要求：
-      1. 替换绝对化用语。
-      2. 补充必要的风险提示。
-      3. 保持原意，但语气更客观中立。
-      4. 仅返回修复后的内容字符串，不要返回JSON。
-    `;
-
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-    });
-
-    const result = response.text;
-    if (!result) throw new Error("AI 没有响应");
-    
-    return result;
-  } catch (error) {
-    console.error("Gemini 合规修复错误:", error);
-    throw error;
-  }
+  return fixedContent;
 };
 
 export const generateCourseScript = async (topic: string, sentiment: string, points: string[]): Promise<string> => {
-  if (!ai) {
-    throw new Error("未找到 API Key。请配置环境变量。");
-  }
+  await new Promise(resolve => setTimeout(resolve, 1200));
 
-  try {
-    const model = 'gemini-2.5-flash';
-    const prompt = `
-      你是一个名为“夜风”的资深股票讲师，正在为国际版飞书群的学员准备【图文讲义】。
-      
-      讲义主题: ${topic}
-      当前市场情绪: ${sentiment} (Bullish=看多, Bearish=看空, Neutral=震荡)
-      核心知识点: ${points.join(', ')}
+  const sentimentEmoji = sentiment === 'bullish' ? '📈 看多 (Bullish)' : sentiment === 'bearish' ? '📉 看空 (Bearish)' : '⚖️ 震荡 (Neutral)';
+  
+  // 基于模版生成
+  return `# ${topic}
 
-      生成要求：
-      1. **格式友好**：使用 Emoji (📈, 📉, 💡, 🚫) 来作为段落标记，适合IM群聊阅读。
-      2. **结构清晰**：包含【盘面观点】、【核心逻辑】、【操作建议】、【风险提示】。
-      3. **风格**：专业、犀利、干货满满。
-      4. 直接返回Markdown格式的内容。
-    `;
+## 1. 市场观点
+当前市场情绪：**${sentimentEmoji}**
 
-    const response = await ai.models.generateContent({
-      model,
-      contents: prompt,
-    });
+## 2. 核心要点
+${points.length > 0 ? points.map((p, i) => `${i + 1}. **${p}**`).join('\n') : '1. **关注资金流向**\n2. **控制仓位节奏**'}
 
-    const result = response.text;
-    if (!result) throw new Error("AI 没有响应");
-    
-    return result;
-  } catch (error) {
-    console.error("Gemini 脚本生成错误:", error);
-    throw error;
-  }
+## 3. 详细解析
+本节课我们将深入探讨 **${topic}**。
+
+### 逻辑分析
+结合当前 ${sentimentEmoji} 的市场环境，我们注意到以下几个关键信号：
+- **资金面**：近期主力资金动向显示...
+- **技术面**：关键均线系统呈现...
+
+### 实战策略
+${points.length > 0 ? `针对"${points[0]}"，建议投资者：` : '建议投资者：'}
+> 保持理性，严格执行交易纪律，不要追涨杀跌。
+
+## 4. 总结与作业
+请大家复盘今日行情，并观察上述提到的关键点位。
+
+---
+*本讲义由系统模版自动生成*
+`;
 };
