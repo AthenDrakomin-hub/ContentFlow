@@ -1,3 +1,4 @@
+
 export type TaskStatus = 'pending' | 'published' | 'draft' | 'failed';
 export type AccountStatus = 'active' | 'expired' | 'connecting';
 
@@ -57,4 +58,46 @@ export interface AuditResult {
   type: string;
   content: string;
   suggestion: string;
+}
+
+// Course Types
+export interface CourseScript {
+  id: string;
+  topic: string; 
+  marketSentiment: 'bullish' | 'bearish' | 'neutral'; 
+  keyPoints: string[];
+  status: 'draft' | 'ready' | 'archived';
+  date: string;
+  platform: 'feishu'; 
+  scriptContent?: string;
+}
+
+// DevTool Types
+export interface DevTool {
+  id: string;
+  name: string;
+  type?: 'script' | 'server' | 'api' | 'custom';
+  status?: 'running' | 'stopped' | 'error' | 'active';
+  url: string;
+  lastRun?: string;
+  description: string;
+}
+
+// Content Schedule Types
+export type TimeSlot = 'early' | 'trading' | 'noon' | 'close' | 'evening' | 'late';
+
+export interface ScheduleItem {
+  timeSlot: TimeSlot;
+  timeRange: string;
+  platform: 'wechat-sub' | 'wechat-serv' | 'baijiahao' | 'douyin' | 'toutiao';
+  accountName: string;
+  category: string;
+  content: string;
+  isImportant?: boolean;
+}
+
+export interface DayPlan {
+  day: string;
+  focus: string;
+  items: ScheduleItem[];
 }

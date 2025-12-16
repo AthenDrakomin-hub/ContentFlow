@@ -30,7 +30,7 @@ export const Navbar: React.FC<NavbarProps> = ({ toggleTheme, isDarkMode }) => {
           <div className="flex items-center">
             <div className="flex-shrink-0 flex items-center text-primary">
               <Globe className="h-8 w-8 mr-2" />
-              <span className="text-xl font-bold text-gray-900 dark:text-white">ContentFlow 跨境智汇</span>
+              <span className="text-xl font-bold text-gray-900 dark:text-white">Ye Feng's Workbench</span>
             </div>
           </div>
           <div className="flex items-center space-x-4">

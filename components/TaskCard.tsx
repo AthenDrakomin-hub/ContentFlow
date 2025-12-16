@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, Check, FileText, Tag, Pencil, Copy, Trash2, Share2, AlertTriangle, AlertCircle, ExternalLink } from 'lucide-react';
+import { Clock, Check, FileText, Tag, Pencil, Copy, Trash2, Share2, AlertTriangle, AlertCircle, ExternalLink, Flame } from 'lucide-react';
 import { Task, TaskStatus } from '../types';
 
 interface TaskCardProps {
@@ -38,12 +38,15 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onStatusUpdate
     }
   };
 
-  const isHighlighted = task.isFocus;
+  // Logic for Today's Focus
+  const today = new Date().toISOString().split('T')[0];
+  const isTodayPending = task.publishDate === today && task.status === 'pending';
+  const isHighlighted = task.isFocus || isTodayPending;
 
   return (
     <div className={`bg-white dark:bg-slate-800 rounded-xl overflow-hidden border transition-all duration-300 hover:-translate-y-1 hover:shadow-lg ${
       isHighlighted 
-        ? 'border-primary shadow-[0_0_0_2px_rgba(22,93,255,0.1)] dark:border-primary' 
+        ? 'border-orange-400 dark:border-orange-500 shadow-md ring-1 ring-orange-100 dark:ring-orange-900/20' 
         : 'border-gray-100 dark:border-gray-700 shadow-sm'
     }`}>
       <div className="p-6">
@@ -57,7 +60,8 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onStatusUpdate
               {task.platform}
             </span>
             {isHighlighted && (
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-gradient-to-r from-red-500 to-orange-500 text-white shadow-sm animate-pulse">
+                <Flame className="h-3 w-3 mr-1 fill-white" />
                 今日重点
               </span>
             )}
@@ -70,8 +74,10 @@ export const TaskCard: React.FC<TaskCardProps> = ({ task, onEdit, onStatusUpdate
                </span>
             ) : (
               <>
-                <Clock className="h-4 w-4 mr-1" />
-                {task.publishDate} {task.publishTime}
+                <Clock className={`h-4 w-4 mr-1 ${isHighlighted ? 'text-orange-500' : ''}`} />
+                <span className={isHighlighted ? 'text-orange-600 dark:text-orange-400 font-medium' : ''}>
+                  {task.publishDate} {task.publishTime}
+                </span>
               </>
             )}
           </div>

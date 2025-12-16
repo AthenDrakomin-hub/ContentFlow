@@ -1,3 +1,4 @@
+
 import { Template, AuditResult } from '../types';
 
 export const TEMPLATES: Record<string, Template> = {
@@ -31,6 +32,38 @@ export const TEMPLATES: Record<string, Template> = {
     ],
     icon: 'microchip',
     color: 'blue'
+  },
+  'retail-recovery': {
+    id: 'retail-recovery',
+    name: '散户回血指南',
+    description: '基于2025调研报告，针对亏损散户的痛点分析与策略',
+    title: '给2025年12月入市的新股民：如何打破“七亏二平一赚”的魔咒？',
+    content: `<h2>为什么越努力交易，亏损越多？</h2>
+<p>调研数据显示，月均交易超过20次的高频短线交易者，仅手续费就能吞噬24%的收益，亏损比例高达82%。</p>
+<h3>三大致命习惯</h3>
+<ul>
+    <li><strong>频繁交易：</strong>决策疲劳，导致非理性选择。</li>
+    <li><strong>追涨杀跌：</strong>看到上涨就FOMO（错失恐惧症），看到下跌就恐慌割肉。</li>
+    <li><strong>缺乏止损：</strong>陷入“鸵鸟心态”，不仅不卖，反而逆势补仓，导致深套。</li>
+</ul>
+<h3>回血策略</h3>
+<p>1. <strong>降低频率：</strong>管住手，减少无效操作，拒绝“为券商打工”。</p>
+<p>2. <strong>科学分仓：</strong>拒绝满仓梭哈，建议采用“金字塔建仓法”。</p>
+<p>3. <strong>建立规则：</strong>买入前想好卖出点，严格执行纪律。</p>
+<p><strong>投资有风险，入市需谨慎。本文仅作为投资理念分享，不构成具体个股推荐。</strong></p>`,
+    platform: 'baijiahao',
+    tags: [
+      { text: '干货', color: 'orange' },
+      { text: '散户', color: 'green' },
+      { text: '高阅读', color: 'red' }
+    ],
+    rules: [
+      '严禁承诺收益（如“稳赚”、“翻倍”）',
+      '数据需引用调研报告',
+      '必须包含风险提示'
+    ],
+    icon: 'activity',
+    color: 'orange'
   },
   'product-promotion': {
     id: 'product-promotion',
@@ -176,7 +209,7 @@ export const TEMPLATES: Record<string, Template> = {
 <p>可持续发展成为重要主题，绿色能源、环保技术将得到更多关注和投资。</p>
 <h3>量子计算</h3>
 <p>量子计算技术取得重要突破，将为科学研究和产业发展带来新的机遇。</p>
-<p><strong>免责声明：本文内容为AI生成，仅供参考，不构成投资建议。</strong></p>`,
+<p><strong>本服务包含AI分析，不构成专业投资建议。</strong></p>`,
     platform: 'wechat',
     tags: [
       { text: 'AI', color: 'purple' },
@@ -199,13 +232,14 @@ const COMPLIANCE_RULES = {
   absolute: [
     '稳赚不赔', '无风险', '零风险', '高回报', '快速升值', '保值增值', 
     '收益高达', '包赚', 'guaranteed returns', '必定翻倍', '100%本息保障', 
-    '保本保息', '稳赚', '只赚不赔'
+    '保本保息', '稳赚', '只赚不赔', '豪赚', '躺赚', '祖传代码', '内幕消息', 
+    '暴富', '翻身', '梭哈'
   ],
   // 3.1 极限用语 (Extreme Words)
   extreme: [
     '最', '最佳', '最具', '最赚', '最优', '最优秀', '最好', '最大', 
     '最大程度', '最高', '最低', '最便宜', '最新', '最先进', '首选', '唯一', 
-    '顶级', '世界级', '国家级', '第一品牌', '王牌'
+    '顶级', '世界级', '国家级', '第一品牌', '王牌', '极致', '极品', '绝无仅有'
   ],
   // 3.1 权威性词汇 (Authority)
   authority: [
@@ -213,26 +247,35 @@ const COMPLIANCE_RULES = {
   ],
   // 3.1 虚拟货币 (Crypto - Baijiahao strict)
   crypto: [
-    '比特币', '虚拟货币', 'ICO', '代币', '数字货币', '挖矿', '以太坊', '泰达币', 'BTC'
+    '比特币', '虚拟货币', 'ICO', '代币', '数字货币', '挖矿', '以太坊', '泰达币', 'BTC', '加密货币'
   ],
   // 3.2 限制使用 (Cautionary - Requires Risk Warning)
   cautionary: [
-    '高收益', '年化收益率', '投资回报', '预期收益', '历史回报', '升值空间'
+    '高收益', '年化收益率', '投资回报', '预期收益', '历史回报', '升值空间', '分红', '股息'
   ],
   // 1.2 违规荐股 (Illegal Stock Rec)
   stock_rec: [
-    '荐股', '跟买必涨', '内幕消息', '主力资金', '拉升在即', '黑马股', '牛股推荐', '代码私发'
+    '荐股', '跟买必涨', '主力资金', '拉升在即', '黑马股', '牛股推荐', '代码私发', 
+    '加群', '免费领股', '跟投', '带飞', '建仓', '抄底', '解套'
+  ],
+  // 3.1 广告法标识 (Ad Marking)
+  ad_indicators: [
+    '购买', '下单', '优惠', '折扣', '抢购', '点击', '扫码'
   ]
 };
 
-const RISK_DISCLOSURE_KEYWORDS = ['投资有风险', '入市需谨慎', '风险自担', '不构成投资建议', '过往业绩不代表未来表现'];
+const RISK_DISCLOSURE_KEYWORDS = ['投资有风险', '入市需谨慎', '风险自担', '不构成投资建议', '过往业绩不代表未来表现', '风险提示'];
+
+// Helper to remove HTML tags for word count and analysis
+const stripHtml = (html: string) => html.replace(/<[^>]*>?/gm, '');
 
 export function performAudit(title: string, content: string, platform: string): { violations: AuditResult[], safeItems: string[], suggestions: string[] } {
   const violations: AuditResult[] = [];
   const safeItems: string[] = [];
   const suggestions: string[] = [];
   
-  const fullText = `${title} ${content}`;
+  const cleanContent = stripHtml(content);
+  const fullText = `${title} ${cleanContent}`;
   // Handle loose platform matching
   const isBaijiahao = platform.toLowerCase().includes('百家号') || platform.toLowerCase().includes('baijiahao');
   const isWechat = platform.toLowerCase().includes('微信') || platform.toLowerCase().includes('wechat') || platform.toLowerCase().includes('service');
@@ -244,7 +287,7 @@ export function performAudit(title: string, content: string, platform: string): 
       violations.push({
         type: '绝对违禁词',
         content: `检测到"${word}"`,
-        suggestion: '根据2025新规，严禁使用收益承诺类词汇，请删除。'
+        suggestion: '根据2025新规，严禁使用收益承诺类词汇，请立即删除。'
       });
     }
   });
@@ -282,6 +325,12 @@ export function performAudit(title: string, content: string, platform: string): 
         });
       }
     });
+  } else {
+     COMPLIANCE_RULES.crypto.forEach(word => {
+      if (fullText.includes(word)) {
+        suggestions.push(`检测到"${word}"，请注意相关政策风险，避免涉及非法交易。`);
+      }
+    });
   }
 
   // Stock Rec (Strict on WeChat)
@@ -291,13 +340,13 @@ export function performAudit(title: string, content: string, platform: string): 
         violations.push({
           type: '违规荐股风险',
           content: `检测到"${word}"`,
-          suggestion: '微信公众平台严厉打击无资质荐股，请确保具有相关牌照并仅提供客观分析。'
+          suggestion: '微信公众平台严厉打击无资质荐股（包括加群、私发代码），请确保内容合规。'
         });
       }
     });
   }
 
-  // 2. 平台特定规则
+  // 2. 平台特定规则与排版规范
   // Baijiahao Title Length (1.1 in Guide)
   if (isBaijiahao && title.length > 30) {
      violations.push({
@@ -307,7 +356,23 @@ export function performAudit(title: string, content: string, platform: string): 
      });
   }
 
-  // 3. 风险提示检测 (Risk Disclosure)
+  // Paragraph Length (Page 8 in Guide: < 200 words)
+  if (isBaijiahao) {
+    const paragraphs = cleanContent.split('\n').filter(p => p.trim().length > 0);
+    const longParagraphs = paragraphs.filter(p => p.length > 200);
+    if (longParagraphs.length > 0) {
+        suggestions.push(`检测到${longParagraphs.length}个段落超过200字，建议分段以提升移动端阅读体验。`);
+    }
+  }
+
+  // 3. 广告标识 (Ad Marking - Page 8)
+  const isAd = COMPLIANCE_RULES.ad_indicators.some(w => fullText.includes(w));
+  const hasAdMark = fullText.includes('广告');
+  if (isAd && !hasAdMark) {
+      suggestions.push('内容疑似包含商业推广信息（购买/优惠等），根据新规建议显著标明"广告"。');
+  }
+
+  // 4. 风险提示检测 (Risk Disclosure)
   // If content contains cautionary words or is financial in nature (heuristic), check for risk warning.
   const hasCautionaryWords = COMPLIANCE_RULES.cautionary.some(w => fullText.includes(w));
   const hasRiskWarning = RISK_DISCLOSURE_KEYWORDS.some(kw => fullText.includes(kw));
@@ -316,25 +381,27 @@ export function performAudit(title: string, content: string, platform: string): 
      violations.push({
         type: '风险提示缺失',
         content: '涉及收益描述但未见风险提示',
-        suggestion: '根据《金融产品网络营销管理办法》，必须显著标示"投资有风险，入市需谨慎"（风险前置化）。'
+        suggestion: '根据《金融产品网络营销管理办法》，必须显著标示"投资有风险，入市需谨慎"（遵循风险前置化原则）。'
      });
   } else if (hasRiskWarning) {
      safeItems.push('已包含合规风险提示');
   }
 
-  // 4. AI 内容标注 (6.1 in Guide)
+  // 5. AI 内容标注 (6.1 in Guide)
   const aiKeywords = ['AI生成', '人工智能生成', 'AI辅助', 'AI分析', '智能生成'];
   const hasAILabel = aiKeywords.some(kw => fullText.includes(kw));
   
-  if (!hasAILabel) {
-      // If we suspect AI content (hard to know for sure, but we add a suggestion for safety)
-      suggestions.push('如本文包含AI生成内容，请根据2025新规，在开头或结尾标注"本文由AI辅助生成"，否则可能被平台按侵权处理。');
-  } else {
+  // Basic heuristic: if tags contain AI or content mentions AI generation
+  const mentionsAI = fullText.toLowerCase().includes('ai') || fullText.includes('智能');
+
+  if (mentionsAI && !hasAILabel) {
+      suggestions.push('如本文包含AI生成内容，请根据2025新规，在开头或结尾标注"本服务包含AI分析，不构成专业投资建议"，否则可能被按侵权处理。');
+  } else if (hasAILabel) {
       safeItems.push('已标注AI生成内容');
   }
 
-  // 5. 电话/联系方式检测
-  if (content.includes('电话') || content.includes('微信')) {
+  // 6. 电话/联系方式检测
+  if (content.includes('电话') || content.includes('微信') || content.includes('手机')) {
       // Simple regex for phone
       if (/(\d{4}-\d{3}-\d{4}|\d{11})/.test(content)) {
           safeItems.push('联系方式格式规范');

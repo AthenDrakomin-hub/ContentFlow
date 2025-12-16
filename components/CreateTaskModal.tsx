@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Bold, Italic, List, ListOrdered, Link, Eraser, Save, Eye, Copy, Check, Sparkles, Loader2, Search, Shield, Info, AlertTriangle, Lightbulb } from 'lucide-react';
+import { X, Bold, Italic, List, ListOrdered, Link, Eraser, Save, Eye, Copy, Check, Sparkles, Loader2, Search, Shield, Info, AlertTriangle, Lightbulb, Wand2 } from 'lucide-react';
 import { Task, Account, Template, AuditResult } from '../types';
-import { optimizeContent } from '../services/geminiService';
+import { optimizeContent, fixComplianceIssues } from '../services/geminiService';
 import { TEMPLATES, performAudit } from '../utils/compliance';
 
 interface CreateTaskModalProps {
@@ -28,6 +28,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
   });
   
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isFixing, setIsFixing] = useState(false);
   const [isAuditing, setIsAuditing] = useState(false);
   const [auditResults, setAuditResults] = useState<{ violations: AuditResult[], safeItems: string[], suggestions: string[] } | null>(null);
 
@@ -72,6 +73,28 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
       showToast("AI 优化失败，请检查 API 配置。");
     } finally {
       setIsAiLoading(false);
+    }
+  };
+
+  const handleAiFixCompliance = async () => {
+    if (!auditResults || auditResults.violations.length === 0) return;
+    
+    setIsFixing(true);
+    try {
+      const violationTexts = auditResults.violations.map(v => v.content + ": " + v.suggestion);
+      const fixedContent = await fixComplianceIssues(formData.content || '', violationTexts);
+      setFormData(prev => ({
+        ...prev,
+        content: fixedContent
+      }));
+      showToast("AI 已尝试修复合规问题，请复核。");
+      // Re-run audit
+      setTimeout(() => handleAudit(), 1000);
+    } catch (error) {
+      console.error(error);
+      showToast("修复失败，请重试");
+    } finally {
+      setIsFixing(false);
     }
   };
 
@@ -327,9 +350,21 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
               <div className="flex flex-col gap-6">
                  {/* Audit Panel */}
                  <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700 flex-1 flex flex-col">
-                    <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                      <Shield className="h-5 w-5 mr-2 text-primary" />
-                      合规审核
+                    <h3 className="font-bold text-gray-900 dark:text-white mb-4 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <Shield className="h-5 w-5 mr-2 text-primary" />
+                        合规审核
+                      </div>
+                      {auditResults && auditResults.violations.length > 0 && (
+                        <button 
+                          onClick={handleAiFixCompliance}
+                          disabled={isFixing}
+                          className="text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2 py-1 rounded-full flex items-center hover:bg-purple-200 transition-colors"
+                        >
+                          {isFixing ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Wand2 className="h-3 w-3 mr-1" />}
+                          AI 一键修复
+                        </button>
+                      )}
                     </h3>
                     
                     <button 
@@ -404,21 +439,23 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                  <div className="bg-gray-50 dark:bg-slate-700/50 rounded-xl p-4 border border-gray-200 dark:border-gray-600">
                     <h4 className="font-bold text-sm text-gray-700 dark:text-gray-300 mb-2 flex items-center">
                       <Info className="h-4 w-4 mr-1" />
-                      平台规则提醒
+                      平台规则提醒 (2025新规)
                     </h4>
                     <ul className="text-xs text-gray-500 dark:text-gray-400 space-y-1.5">
                        {formData.platform.includes('百家号') ? (
                          <>
-                           <li>• 禁止使用"最"、"第一"等极限用语</li>
-                           <li>• 电话信息必须真实有效并标注</li>
+                           <li>• 严禁发布虚拟货币相关内容</li>
+                           <li>• 标题禁止使用夸张/虚假词汇</li>
+                           <li>• 广告必须显著标明"广告"字样</li>
                          </>
                        ) : formData.platform.includes('服务号') ? (
                          <>
-                           <li>• AI生成内容必须标注说明</li>
-                           <li>• 每月仅4次群发机会</li>
+                           <li>• 严禁违规荐股/加群/代码私发</li>
+                           <li>• AI生成内容必须明确标注</li>
+                           <li>• 严厉打击编造传播虚假信息</li>
                          </>
                        ) : (
-                         <li>• 请遵守相关法律法规与平台规范</li>
+                         <li>• 请严格遵守《金融投资领域内容平台合规政策指南》</li>
                        )}
                     </ul>
                  </div>
