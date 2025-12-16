@@ -19,17 +19,17 @@ export const TodaySchedule: React.FC<TodayScheduleProps> = ({ tasks, onEdit, onC
   const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl p-6 mb-8 border border-gray-100 dark:border-gray-700 shadow-sm animate-fade-in group">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+    <div className="bg-white dark:bg-slate-800 rounded-xl p-4 md:p-6 mb-6 md:mb-8 border border-gray-100 dark:border-gray-700 shadow-sm animate-fade-in group">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-4 md:mb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center">
-            <Calendar className="h-6 w-6 mr-2 text-primary" />
+          <h3 className="text-lg md:text-xl font-bold text-gray-900 dark:text-white flex items-center">
+            <Calendar className="h-5 w-5 md:h-6 md:w-6 mr-2 text-primary" />
             今日计划
-            <span className="ml-3 text-sm font-normal px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+            <span className="ml-3 text-xs md:text-sm font-normal px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
               {completed}/{total} 完成
             </span>
           </h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1 ml-8">
+          <p className="text-gray-500 dark:text-gray-400 text-xs md:text-sm mt-1 ml-7 md:ml-8">
             {new Date().toLocaleDateString('zh-CN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>
         </div>
@@ -49,29 +49,30 @@ export const TodaySchedule: React.FC<TodayScheduleProps> = ({ tasks, onEdit, onC
             </div>
             <button 
                 onClick={onCreateToday}
-                className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white text-sm px-4 py-2 rounded-lg transition-colors font-medium flex items-center shadow-sm"
+                className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white text-xs md:text-sm px-3 md:px-4 py-2 rounded-lg transition-colors font-medium flex items-center shadow-sm whitespace-nowrap"
             >
-                <Plus className="h-4 w-4 mr-1" />
+                <Plus className="h-3.5 w-3.5 md:h-4 md:w-4 mr-1" />
                 添加任务
             </button>
         </div>
       </div>
 
       {todaysTasks.length === 0 ? (
-        <div className="text-center py-10 bg-gray-50 dark:bg-slate-700/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-600 transition-colors hover:border-primary/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer" onClick={onCreateToday}>
-            <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
-                <Calendar className="h-6 w-6 text-gray-400" />
+        <div className="text-center py-8 md:py-10 bg-gray-50 dark:bg-slate-700/30 rounded-xl border border-dashed border-gray-200 dark:border-gray-600 transition-colors hover:border-primary/50 hover:bg-blue-50/30 dark:hover:bg-blue-900/10 cursor-pointer" onClick={onCreateToday}>
+            <div className="w-10 h-10 md:w-12 md:h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm">
+                <Calendar className="h-5 w-5 md:h-6 md:w-6 text-gray-400" />
             </div>
-            <p className="text-gray-500 dark:text-gray-400 font-medium">今天暂时没有安排任务</p>
-            <p className="text-sm text-gray-400 mt-1">点击此处快速创建</p>
+            <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 font-medium">今天暂时没有安排任务</p>
+            <p className="text-xs md:text-sm text-gray-400 mt-1">点击此处快速创建</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        /* Mobile: Horizontal Scroll, Desktop: Grid */
+        <div className="flex overflow-x-auto pb-4 -mx-4 px-4 md:grid md:grid-cols-2 lg:grid-cols-3 md:mx-0 md:px-0 md:pb-0 gap-4 snap-x hide-scrollbar">
             {todaysTasks.map(task => (
                 <div 
                     key={task.id} 
                     onClick={() => onEdit(task)}
-                    className={`relative p-4 rounded-xl border cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 group/card ${
+                    className={`min-w-[85vw] sm:min-w-[300px] md:min-w-0 snap-center relative p-4 rounded-xl border cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 group/card ${
                         task.status === 'published' 
                         ? 'bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900/30' 
                         : 'bg-white dark:bg-slate-700/50 border-gray-200 dark:border-gray-600 hover:border-primary/30'

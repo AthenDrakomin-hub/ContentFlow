@@ -180,6 +180,22 @@ const App: React.FC = () => {
     setToast({ message, isVisible: true });
   };
 
+  // Quick Filter Handler from StatsOverview
+  const handleQuickFilter = (type: 'pending' | 'published' | 'today') => {
+    setFilters(prev => {
+        setSearchTerm(''); // Clear search
+        if (type === 'today') {
+            return { ...prev, time: 'today', status: 'all', platform: 'all' };
+        } else {
+            return { ...prev, status: type, time: 'all', platform: 'all' };
+        }
+    });
+    // Scroll to list section
+    setTimeout(() => {
+        document.getElementById('task-list-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   // Account Handlers
   const handleAddAccount = async (newAccount: Omit<Account, 'id'>) => {
     try {
@@ -384,8 +400,8 @@ const App: React.FC = () => {
                 <>
                   <div className="flex items-center justify-between">
                     <div>
-                      <h1 className="text-2xl font-bold text-gray-900 dark:text-white">欢迎回来，{session.user.email?.split('@')[0] || '夜风'} 👋</h1>
-                      <p className="text-gray-500 dark:text-gray-400 mt-1">
+                      <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">欢迎回来，{session.user.email?.split('@')[0] || '夜风'} 👋</h1>
+                      <p className="text-sm md:text-base text-gray-500 dark:text-gray-400 mt-1">
                         {isLoading ? '正在从数据库同步数据...' : '今天又是高效产出的一天，看看有什么新任务吧。'}
                       </p>
                     </div>
@@ -394,6 +410,7 @@ const App: React.FC = () => {
                   <StatsOverview 
                     stats={stats} 
                     onManageAccounts={() => setIsAccountModalOpen(true)}
+                    onQuickFilter={handleQuickFilter}
                   />
                   
                   <TodaySchedule 
@@ -402,7 +419,7 @@ const App: React.FC = () => {
                     onCreateToday={() => { setCurrentTask(null); setIsCreateModalOpen(true); }}
                   />
 
-                  <div className="bg-white/50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-gray-800 p-1">
+                  <div id="task-list-section" className="bg-white/50 dark:bg-slate-800/50 rounded-3xl border border-gray-100 dark:border-gray-800 p-1">
                     <TaskFilters 
                       filters={filters} 
                       setFilters={setFilters} 
