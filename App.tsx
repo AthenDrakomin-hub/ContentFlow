@@ -52,6 +52,7 @@ const App: React.FC = () => {
   const [filteredTasks, setFilteredTasks] = useState<Task[]>([]);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLoading, setIsLoading] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // Mobile Menu State
   
   // Stats derivation with dynamic date
   const todayStr = new Date().toISOString().split('T')[0];
@@ -178,6 +179,11 @@ const App: React.FC = () => {
 
   const showToast = (message: string) => {
     setToast({ message, isVisible: true });
+  };
+
+  const handleSidebarTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setIsMobileMenuOpen(false); // Close sidebar on mobile when navigating
   };
 
   // Quick Filter Handler from StatsOverview
@@ -376,21 +382,24 @@ const App: React.FC = () => {
   return (
     <div className={`flex h-screen bg-slate-50 dark:bg-slate-900 transition-colors duration-300 font-inter text-slate-900 dark:text-slate-50 overflow-hidden ${isDarkMode ? 'dark' : ''}`}>
       
-      {/* Left Sidebar */}
+      {/* Left Sidebar (Desktop & Mobile) */}
       <Sidebar 
-        onCreateNew={() => { setCurrentTask(null); setIsCreateModalOpen(true); }}
+        onCreateNew={() => { setCurrentTask(null); setIsCreateModalOpen(true); setIsMobileMenuOpen(false); }}
         activeTab={activeTab}
-        setActiveTab={setActiveTab}
+        setActiveTab={handleSidebarTabChange}
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
       />
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         {/* Top Header Bar */}
         <TopBar 
           toggleTheme={toggleTheme} 
           isDarkMode={isDarkMode} 
           onSearch={setSearchTerm}
-          toggleSidebar={() => {}} 
+          toggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          onNavigate={(tab) => { setActiveTab(tab); setIsMobileMenuOpen(false); }}
         />
 
         {/* Scrollable Content */}
