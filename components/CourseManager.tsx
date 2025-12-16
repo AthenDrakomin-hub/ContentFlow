@@ -216,7 +216,7 @@ export const CourseManager: React.FC = () => {
                 <div className="space-y-6 relative z-10">
                     <div>
                         <div className="flex justify-between text-xs mb-2 text-gray-400">
-                            <span>资金&lt;10万 亏损比例</span>
+                            <span>资金小于10万 亏损比例</span>
                             <span className="text-red-400 font-mono">98.7%</span>
                         </div>
                         <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
@@ -225,7 +225,7 @@ export const CourseManager: React.FC = () => {
                     </div>
                     <div>
                         <div className="flex justify-between text-xs mb-2 text-gray-400">
-                            <span>高频交易(&gt;20次/月) 亏损率</span>
+                            <span>高频交易(大于20次/月) 亏损率</span>
                             <span className="text-orange-400 font-mono">82%</span>
                         </div>
                         <div className="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
