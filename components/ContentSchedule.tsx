@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Calendar, Clock, Layers, Zap, ShieldAlert, Sun, Activity, Coffee, Flag, BookOpen, Moon, CheckCircle, BarChart, Star, AlertTriangle } from 'lucide-react';
 import { TimeSlot, ScheduleItem, DayPlan } from '../types';
@@ -90,7 +91,7 @@ const PLATFORM_RULES = [
     { name: '微信公众号', rules: ['订阅号每日1次群发', '服务号每月4次', '商业推广必标"广告"', '财经内容原创权重30%'] },
     { name: '百家号', rules: ['转正号每日5篇', '原创号10篇', '财经需申请领域且持续产出', '恢复期7-30天'] },
     { name: '抖音/小红书', rules: ['必须专业资质认证', '禁止非法荐股/预测价位', '新笔记有1小时黄金观察期'] },
-    { name: '今日头条', rules: ['首发激励需>100字', '财经资质要求严格', '新手期每日至少1篇'] },
+    { name: '今日头条', rules: ['首发激励需大于100字', '财经资质要求严格', '新手期每日至少1篇'] },
 ];
 
 // --- Component ---

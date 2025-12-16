@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { BookOpen, TrendingUp, TrendingDown, Minus, FileText, MoreVertical, MessageSquare, Play, Edit, PieChart, Users, AlertCircle, Globe, ExternalLink, Bookmark, PenTool, Save, LayoutGrid, List, RefreshCw, Table, Copy, Check } from 'lucide-react';
 import { CourseScript } from '../types';
@@ -324,7 +323,7 @@ export const CourseManager: React.FC = () => {
                             <h4 className="font-bold text-blue-800 dark:text-blue-300 text-sm">如何使用表格？</h4>
                             <p className="text-xs text-blue-700 dark:text-blue-400 mt-1">
                                 1. 点击下方模板的“复制表格代码”按钮。<br/>
-                                2. 进入“课程列表” -> “新建讲义”或编辑现有讲义。<br/>
+                                2. 进入“课程列表” → “新建讲义”或编辑现有讲义。<br/>
                                 3. 在编辑器中直接粘贴，系统会自动渲染为漂亮的 Markdown 表格。
                             </p>
                         </div>

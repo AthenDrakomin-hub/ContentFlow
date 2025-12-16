@@ -139,7 +139,7 @@ export const DevToolbox: React.FC = () => {
     // 1. Frequency Analysis (Report 2.1 & 1.2)
     if (diagValues.freq > 20) {
       riskScore += 40;
-      risks.push({ title: "高频交易陷阱", desc: "月交易>20次，报告显示亏损率高达82%。手续费损耗约24%。" });
+      risks.push({ title: "高频交易陷阱", desc: "月交易大于20次，报告显示亏损率高达82%。手续费损耗约24%。" });
     } else if (diagValues.freq > 10) {
       riskScore += 20;
       risks.push({ title: "交易频率偏高", desc: "容易陷入追涨杀跌的恶性循环。" });
@@ -318,7 +318,7 @@ export const DevToolbox: React.FC = () => {
                                     />
                                     <span className="w-12 text-center font-mono font-bold text-gray-800 dark:text-white">{diagValues.freq}</span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-1">报告参考值：&gt;20次/月 为高危</p>
+                                <p className="text-xs text-gray-400 mt-1">报告参考值：大于 20次/月 为高危</p>
                             </div>
 
                             <div>
@@ -332,7 +332,7 @@ export const DevToolbox: React.FC = () => {
                                     />
                                     <span className="w-12 text-center font-mono font-bold text-gray-800 dark:text-white">{diagValues.money}w</span>
                                 </div>
-                                <p className="text-xs text-gray-400 mt-1">报告参考值：&lt;10万 亏损率极高</p>
+                                <p className="text-xs text-gray-400 mt-1">报告参考值：小于 10万 亏损率极高</p>
                             </div>
 
                             <div className="flex justify-between items-center py-2">
